@@ -5,13 +5,13 @@ async function generateResult() {
 
   const prompt = `${my}와 ${partner}의 궁합을 ${style} 느낌으로 표현한 감성 이미지`;
 
-  const res = await fetch("http://localhost:4000/generate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ prompt })
-  });
+  const res = await fetch("https://mbti-image-generator-fvfr.vercel.app/generate", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ prompt })
+});
 
   const data = await res.json();
 
