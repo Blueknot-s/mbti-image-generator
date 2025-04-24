@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MBTI 궁합 테스트</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1><strong>MBTI 궁합 테스트 ✨ 감성 이미지 스타일 선택</strong></h1>
+    <label for="myMbti">나의 MBTI</label>
+    <select id="myMbti">
+      <option>ENFP</option><option>INFP</option><option>ISFJ</option><option>ISTP</option>
+    </select>
+    <label for="partnerMbti">상대의 MBTI</label>
+    <select id="partnerMbti">
+      <option>ENFP</option><option>INFP</option><option>ISFJ</option><option>ISTP</option>
+    </select>
+    <label for="style">감성 이미지 스타일</label>
+    <select id="style">
+      <option>지브리 스타일 (ghibli)</option>
+    </select>
+    <button onclick="generateResult()">궁합 보기</button>
+
+    <div id="result" class="result hidden">
+      <div class="hearts">❤️❤️❤️🤍🤍</div>
+      <h2>이성과 감성의 균형이 조화를 이루는 조합</h2>
+      <p>갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다.</p>
+      <img id="resultImage" src="" alt="감성 이미지" />
+      <br />
+      <button onclick="downloadImage()">🧷 이미지 다운로드</button>
+      <br />
+      <button>🔗 공유하기</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
