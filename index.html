@@ -1,39 +1,1388 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MBTI 궁합 테스트</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+    .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; max-width: 600px; margin: auto; }
+    h1 { color: #2349c4; }
+    select, button { width: 100%; padding: 10px; margin: 10px 0; }
+    #result { margin-top: 20px; text-align: center; }
+    .hearts { font-size: 24px; color: red; }
+    .image-container img { max-width: 100%; border-radius: 10px; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1><strong>MBTI 궁합 테스트 ✨ 감성 이미지 스타일 선택</strong></h1>
-    <label for="myMbti">나의 MBTI</label>
-    <select id="myMbti">
-      <option>ENFP</option><option>INFP</option><option>ISFJ</option><option>ISTP</option>
-    </select>
-    <label for="partnerMbti">상대의 MBTI</label>
-    <select id="partnerMbti">
-      <option>ENFP</option><option>INFP</option><option>ISFJ</option><option>ISTP</option>
-    </select>
-    <label for="style">감성 이미지 스타일</label>
-    <select id="style">
-      <option>지브리 스타일 (ghibli)</option>
-    </select>
-    <button onclick="generateResult()">궁합 보기</button>
+<div class="container">
+  <h1><strong>MBTI 궁합 테스트 ✨ 감성 이미지 스타일 선택</strong></h1>
 
-    <div id="result" class="result hidden">
-      <div class="hearts">❤️❤️❤️🤍🤍</div>
-      <h2>이성과 감성의 균형이 조화를 이루는 조합</h2>
-      <p>갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다.</p>
-      <img id="resultImage" src="" alt="감성 이미지" />
-      <br />
-      <button onclick="downloadImage()">🧷 이미지 다운로드</button>
-      <br />
-      <button>🔗 공유하기</button>
-    </div>
-  </div>
-  <script src="script.js"></script>
+  <label for="myMbti">나의 MBTI</label>
+  <select id="myMbti">
+    <option disabled selected>선택하세요</option>
+  </select>
+
+  <label for="partnerMbti">상대의 MBTI</label>
+  <select id="partnerMbti">
+    <option disabled selected>선택하세요</option>
+  </select>
+
+  <label for="style">감성 이미지 스타일</label>
+  <select id="style">
+    <option value="line-art">라인 아트 (line-art)</option>
+    <option value="ghibli">지브리 스타일 (ghibli)</option>
+    <option value="watercolor">수채화 (watercolor)</option>
+  </select>
+
+  <button onclick="runMatchTest()">궁합 보기</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  const mbtiList = [
+    'INFP','ENFP','INFJ','ENFJ','INTP','ENTP','INTJ','ENTJ',
+    'ISFP','ESFP','ISFJ','ESFJ','ISTP','ESTP','ISTJ','ESTJ'
+  ];
+
+  const myMbti = document.getElementById("myMbti");
+  const partnerMbti = document.getElementById("partnerMbti");
+  mbtiList.forEach(type => {
+    myMbti.innerHTML += `<option value="${type}">${type}</option>`;
+    partnerMbti.innerHTML += `<option value="${type}">${type}</option>`;
+  });
+
+  // 공유 및 다운로드 가능하도록 기능 추가
+  function runMatchTest() {
+    const my = myMbti.value;
+    const partner = partnerMbti.value;
+    const style = document.getElementById("style").value;
+    const key = `${my}_${partner}`;
+
+    const resultDiv = document.getElementById("result");
+    if (!emotionDB[key]) {
+      resultDiv.innerHTML = "<p>😢 아직 준비되지 않은 궁합 조합입니다.</p>";
+      return;
+    }
+
+    const result = emotionDB[key];
+    const hearts = "❤️".repeat(result.score) + "🤍".repeat(5 - result.score);
+    const imageUrl = `https://via.placeholder.com/300x300?text=${my}+%E2%9D%A4+${partner}`;
+
+    resultDiv.innerHTML = `
+      <div class="hearts">${hearts}</div>
+      <p><strong>${result.message}</strong></p>
+      <p>${result.description}</p>
+      <div class="image-container">
+        <img id="generatedImage" src="${imageUrl}" alt="감성 이미지" />
+      </div>
+      <button onclick="downloadImage('${imageUrl}')">⬇️ 이미지 다운로드</button>
+      <button onclick="copyLink('${imageUrl}')">🔗 공유하기</button>
+    `;
+  }
+
+  function downloadImage(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mbti-image.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      alert("✅ 이미지 링크가 복사되었습니다!");
+    });
+  }
+</script>
+
+<!-- 여기에 emotionDB 전체 데이터 삽입 -->
+  <script>
+  const emotionDB = {
+  "INFP_INFP": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "INFP_ENFP": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "INFP_INFJ": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "INFP_ENFJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "INFP_INTP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFP_ENTP": {
+    "score": 4,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFP_INTJ": {
+    "score": 5,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "INFP_ENTJ": {
+    "score": 4,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "INFP_ISFP": {
+    "score": 2,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "INFP_ESFP": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFP_ISFJ": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "INFP_ESFJ": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "INFP_ISTP": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INFP_ESTP": {
+    "score": 3,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "INFP_ISTJ": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFP_ESTJ": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ENFP_INFP": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENFP_ENFP": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ENFP_INFJ": {
+    "score": 2,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ENFP_ENFJ": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ENFP_INTP": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ENFP_ENTP": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENFP_INTJ": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENFP_ENTJ": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ENFP_ISFP": {
+    "score": 2,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ENFP_ESFP": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENFP_ISFJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENFP_ESFJ": {
+    "score": 2,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENFP_ISTP": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ENFP_ESTP": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENFP_ISTJ": {
+    "score": 5,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENFP_ESTJ": {
+    "score": 3,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFJ_INFP": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "INFJ_ENFP": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFJ_INFJ": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INFJ_ENFJ": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "INFJ_INTP": {
+    "score": 5,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INFJ_ENTP": {
+    "score": 5,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "INFJ_INTJ": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "INFJ_ENTJ": {
+    "score": 3,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INFJ_ISFP": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INFJ_ESFP": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFJ_ISFJ": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INFJ_ESFJ": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INFJ_ISTP": {
+    "score": 4,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INFJ_ESTP": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INFJ_ISTJ": {
+    "score": 4,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "INFJ_ESTJ": {
+    "score": 4,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ENFJ_INFP": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ENFJ_ENFP": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ENFJ_INFJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ENFJ_ENFJ": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENFJ_INTP": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENFJ_ENTP": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ENFJ_INTJ": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENFJ_ENTJ": {
+    "score": 4,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ENFJ_ISFP": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ENFJ_ESFP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENFJ_ISFJ": {
+    "score": 5,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENFJ_ESFJ": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ENFJ_ISTP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENFJ_ESTP": {
+    "score": 4,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENFJ_ISTJ": {
+    "score": 3,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ENFJ_ESTJ": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "INTP_INFP": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INTP_ENFP": {
+    "score": 2,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "INTP_INFJ": {
+    "score": 4,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INTP_ENFJ": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "INTP_INTP": {
+    "score": 4,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "INTP_ENTP": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "INTP_INTJ": {
+    "score": 3,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "INTP_ENTJ": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INTP_ISFP": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "INTP_ESFP": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "INTP_ISFJ": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "INTP_ESFJ": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INTP_ISTP": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INTP_ESTP": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INTP_ISTJ": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INTP_ESTJ": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ENTP_INFP": {
+    "score": 3,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ENTP_ENFP": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ENTP_INFJ": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ENTP_ENFJ": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ENTP_INTP": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENTP_ENTP": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENTP_INTJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENTP_ENTJ": {
+    "score": 4,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ENTP_ISFP": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ENTP_ESFP": {
+    "score": 2,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ENTP_ISFJ": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENTP_ESFJ": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENTP_ISTP": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENTP_ESTP": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENTP_ISTJ": {
+    "score": 3,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENTP_ESTJ": {
+    "score": 5,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INTJ_INFP": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "INTJ_ENFP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INTJ_INFJ": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "INTJ_ENFJ": {
+    "score": 3,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INTJ_INTP": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INTJ_ENTP": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "INTJ_INTJ": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INTJ_ENTJ": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "INTJ_ISFP": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "INTJ_ESFP": {
+    "score": 4,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "INTJ_ISFJ": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "INTJ_ESFJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "INTJ_ISTP": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "INTJ_ESTP": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "INTJ_ISTJ": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "INTJ_ESTJ": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ENTJ_INFP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENTJ_ENFP": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENTJ_INFJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ENTJ_ENFJ": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ENTJ_INTP": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENTJ_ENTP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ENTJ_INTJ": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENTJ_ENTJ": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ENTJ_ISFP": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ENTJ_ESFP": {
+    "score": 4,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ENTJ_ISFJ": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ENTJ_ESFJ": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ENTJ_ISTP": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ENTJ_ESTP": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ENTJ_ISTJ": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ENTJ_ESTJ": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISFP_INFP": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ISFP_ENFP": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISFP_INFJ": {
+    "score": 4,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISFP_ENFJ": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ISFP_INTP": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ISFP_ENTP": {
+    "score": 2,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ISFP_INTJ": {
+    "score": 3,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISFP_ENTJ": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISFP_ISFP": {
+    "score": 4,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISFP_ESFP": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ISFP_ISFJ": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ISFP_ESFJ": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISFP_ISTP": {
+    "score": 3,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ISFP_ESTP": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISFP_ISTJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ISFP_ESTJ": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESFP_INFP": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESFP_ENFP": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ESFP_INFJ": {
+    "score": 3,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ESFP_ENFJ": {
+    "score": 4,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ESFP_INTP": {
+    "score": 3,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESFP_ENTP": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESFP_INTJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESFP_ENTJ": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ESFP_ISFP": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ESFP_ESFP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESFP_ISFJ": {
+    "score": 2,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ESFP_ESFJ": {
+    "score": 3,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESFP_ISTP": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ESFP_ESTP": {
+    "score": 5,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESFP_ISTJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESFP_ESTJ": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISFJ_INFP": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISFJ_ENFP": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ISFJ_INFJ": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ISFJ_ENFJ": {
+    "score": 5,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISFJ_INTP": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISFJ_ENTP": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISFJ_INTJ": {
+    "score": 4,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISFJ_ENTJ": {
+    "score": 4,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ISFJ_ISFP": {
+    "score": 2,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISFJ_ESFP": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISFJ_ISFJ": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ISFJ_ESFJ": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISFJ_ISTP": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISFJ_ESTP": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ISFJ_ISTJ": {
+    "score": 4,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISFJ_ESTJ": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ESFJ_INFP": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESFJ_ENFP": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESFJ_INFJ": {
+    "score": 2,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESFJ_ENFJ": {
+    "score": 3,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ESFJ_INTP": {
+    "score": 4,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESFJ_ENTP": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESFJ_INTJ": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ESFJ_ENTJ": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ESFJ_ISFP": {
+    "score": 2,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESFJ_ESFP": {
+    "score": 2,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ESFJ_ISFJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESFJ_ESFJ": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESFJ_ISTP": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESFJ_ESTP": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESFJ_ISTJ": {
+    "score": 4,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ESFJ_ESTJ": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISTP_INFP": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTP_ENFP": {
+    "score": 5,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ISTP_INFJ": {
+    "score": 5,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISTP_ENFJ": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISTP_INTP": {
+    "score": 4,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISTP_ENTP": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ISTP_INTJ": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISTP_ENTJ": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISTP_ISFP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISTP_ESFP": {
+    "score": 2,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISTP_ISFJ": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ISTP_ESFJ": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISTP_ISTP": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISTP_ESTP": {
+    "score": 5,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ISTP_ISTJ": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISTP_ESTJ": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESTP_INFP": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTP_ENFP": {
+    "score": 3,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESTP_INFJ": {
+    "score": 2,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ESTP_ENFJ": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESTP_INTP": {
+    "score": 5,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTP_ENTP": {
+    "score": 5,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ESTP_INTJ": {
+    "score": 3,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ESTP_ENTJ": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESTP_ISFP": {
+    "score": 2,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ESTP_ESFP": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ESTP_ISFJ": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESTP_ESFJ": {
+    "score": 4,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESTP_ISTP": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESTP_ESTP": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ESTP_ISTJ": {
+    "score": 4,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "같은 방향을 바라보며 함께 성장할 수 있는 잠재력을 가진 조합입니다."
+  },
+  "ESTP_ESTJ": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISTJ_INFP": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ISTJ_ENFP": {
+    "score": 5,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTJ_INFJ": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISTJ_ENFJ": {
+    "score": 3,
+    "message": "완벽한 팀워크를 기대할 수 있는 구성",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISTJ_INTP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTJ_ENTP": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ISTJ_INTJ": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ISTJ_ENTJ": {
+    "score": 5,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISTJ_ISFP": {
+    "score": 5,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ISTJ_ESFP": {
+    "score": 4,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "시작은 어색할 수 있으나, 시간이 지날수록 진정한 파트너가 됩니다."
+  },
+  "ISTJ_ISFJ": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTJ_ESFJ": {
+    "score": 2,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTJ_ISTP": {
+    "score": 3,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTJ_ESTP": {
+    "score": 3,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTJ_ISTJ": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ISTJ_ESTJ": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ESTJ_INFP": {
+    "score": 3,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESTJ_ENFP": {
+    "score": 4,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESTJ_INFJ": {
+    "score": 4,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  },
+  "ESTJ_ENFJ": {
+    "score": 5,
+    "message": "서로의 세계를 넓혀주는 환상의 콤비",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTJ_INTP": {
+    "score": 4,
+    "message": "대화와 공감이 넘치는 교감형 관계",
+    "description": "낯선 세계를 이해하고 존중하는 과정이 서로를 성숙하게 만듭니다."
+  },
+  "ESTJ_ENTP": {
+    "score": 5,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTJ_INTJ": {
+    "score": 2,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로의 부족한 부분을 채워주며 완성형 커플을 만들어가는 관계입니다."
+  },
+  "ESTJ_ENTJ": {
+    "score": 4,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTJ_ISFP": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTJ_ESFP": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTJ_ISFJ": {
+    "score": 2,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ESTJ_ESFJ": {
+    "score": 4,
+    "message": "서로의 차이를 이해하며 성장하는 듀오",
+    "description": "갈등을 피하지 않고, 함께 해결해나가며 더욱 단단해지는 궁합입니다."
+  },
+  "ESTJ_ISTP": {
+    "score": 3,
+    "message": "이성과 감성의 균형이 조화를 이루는 조합",
+    "description": "서로 다른 성향 속에서도 조화를 이루며 감정적인 안정감을 주는 관계입니다."
+  },
+  "ESTJ_ESTP": {
+    "score": 4,
+    "message": "영혼의 깊이를 나누는 이상적인 조합",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTJ_ISTJ": {
+    "score": 5,
+    "message": "충돌도 있지만 그만큼 배움이 있는 관계",
+    "description": "섬세한 감정 표현과 지적 교류가 자연스럽게 이어지는 관계입니다."
+  },
+  "ESTJ_ESTJ": {
+    "score": 5,
+    "message": "감성과 현실이 공존하는 따뜻한 파트너",
+    "description": "자유로움과 안정감이 공존하며 서로에게 귀감이 되는 조합입니다."
+  }
+};
+</script>
 </body>
 </html>
