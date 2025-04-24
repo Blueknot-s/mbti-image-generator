@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MBTI 궁합 테스트</title>
   <style>
     body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
@@ -16,91 +15,130 @@
   </style>
 </head>
 <body>
-<div class="container">
-  <h1><strong>MBTI 궁합 테스트 ✨ 감성 이미지 스타일 선택</strong></h1>
+  <main class="container">
+    <h1>MBTI 궁합 테스트 ✨ 감성 이미지 스타일 선택</h1>
 
-  <label for="myMbti">나의 MBTI</label>
-  <select id="myMbti">
-    <option disabled selected>선택하세요</option>
-  </select>
+    <label for="myMbti">나의 MBTI</label>
+    <select id="myMbti">
+      <option disabled selected value="">선택하세요</option>
+    </select>
 
-  <label for="partnerMbti">상대의 MBTI</label>
-  <select id="partnerMbti">
-    <option disabled selected>선택하세요</option>
-  </select>
+    <label for="partnerMbti">상대의 MBTI</label>
+    <select id="partnerMbti">
+      <option disabled selected value="">선택하세요</option>
+    </select>
 
-  <label for="style">감성 이미지 스타일</label>
-  <select id="style">
-    <option value="line-art">라인 아트 (line-art)</option>
-    <option value="ghibli">지브리 스타일 (ghibli)</option>
-    <option value="watercolor">수채화 (watercolor)</option>
-  </select>
+    <label for="style">감성 이미지 스타일</label>
+    <select id="style">
+      <option value="line-art">라인 아트 (line-art)</option>
+      <option value="ghibli">지브리 스타일 (ghibli)</option>
+      <option value="watercolor">수채화 (watercolor)</option>
+    </select>
 
-  <button onclick="runMatchTest()">궁합 보기</button>
+    <button type="button" id="matchButton">궁합 보기</button>
 
-  <div id="result"></div>
-</div>
+    <div id="result" aria-live="polite"></div>
+  </main>
 
-<script>
-  const mbtiList = [
-    'INFP','ENFP','INFJ','ENFJ','INTP','ENTP','INTJ','ENTJ',
-    'ISFP','ESFP','ISFJ','ESFJ','ISTP','ESTP','ISTJ','ESTJ'
-  ];
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mbtiList = [
+        'INFP','ENFP','INFJ','ENFJ','INTP','ENTP','INTJ','ENTJ',
+        'ISFP','ESFP','ISFJ','ESFJ','ISTP','ESTP','ISTJ','ESTJ'
+      ];
+      const myMbti = document.getElementById('myMbti');
+      const partnerMbti = document.getElementById('partnerMbti');
+      mbtiList.forEach(type => {
+        const opt1 = document.createElement('option');
+        opt1.value = type;
+        opt1.textContent = type;
+        myMbti.appendChild(opt1);
 
-  const myMbti = document.getElementById("myMbti");
-  const partnerMbti = document.getElementById("partnerMbti");
-  mbtiList.forEach(type => {
-    myMbti.innerHTML += `<option value="${type}">${type}</option>`;
-    partnerMbti.innerHTML += `<option value="${type}">${type}</option>`;
-  });
+        const opt2 = document.createElement('option');
+        opt2.value = type;
+        opt2.textContent = type;
+        partnerMbti.appendChild(opt2);
+      });
 
-  // 공유 및 다운로드 가능하도록 기능 추가
-  function runMatchTest() {
-    const my = myMbti.value;
-    const partner = partnerMbti.value;
-    const style = document.getElementById("style").value;
-    const key = `${my}_${partner}`;
+      document.getElementById('matchButton').addEventListener('click', runMatchTest);
+    });
 
-    const resultDiv = document.getElementById("result");
-    if (!emotionDB[key]) {
-      resultDiv.innerHTML = "<p>😢 아직 준비되지 않은 궁합 조합입니다.</p>";
-      return;
+    async function runMatchTest() {
+      const my = document.getElementById('myMbti').value;
+      const partner = document.getElementById('partnerMbti').value;
+      const style = document.getElementById('style').value;
+      const key = `${my}_${partner}`;
+      const resultDiv = document.getElementById('result');
+
+      // 입력 검증
+      if (!my || !partner) {
+        resultDiv.innerHTML = '<p>❗️ MBTI를 모두 선택해주세요.</p>';
+        return;
+      }
+      if (!emotionDB[key]) {
+        resultDiv.innerHTML = '<p>😢 아직 준비되지 않은 궁합 조합입니다.</p>';
+        return;
+      }
+
+      // 로딩 표시
+      resultDiv.innerHTML = '<p>이미지 생성 중… ✨</p>';
+
+      // 프롬프트 생성
+      const prompt = `${my}와 ${partner}의 궁합을 ${style} 스타일로 감성적으로 표현한 일러스트`;
+
+      try {
+        const response = await fetch(
+          'https://mbti-image-generator-fvfr.vercel.app/api/generate',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, style })
+          }
+        );
+        console.log('Fetch status:', response.status);
+        if (!response.ok) throw new Error(response.statusText);
+
+        const data = await response.json();
+        console.log('Generator response:', data);
+        const imageUrl = data.url;
+        if (!imageUrl) throw new Error('No URL in response');
+
+        // 결과 출력
+        const result = emotionDB[key];
+        const hearts = '❤️'.repeat(result.score) + '🤍'.repeat(5 - result.score);
+        resultDiv.innerHTML = `
+          <div class="hearts">${hearts}</div>
+          <p><strong>${result.message}</strong></p>
+          <p>${result.description}</p>
+          <div class="image-container">
+            <img src="${imageUrl}" alt="감성 이미지" />
+          </div>
+          <button type="button" onclick="downloadImage('${imageUrl}')">⬇️ 다운로드</button>
+          <button type="button" onclick="copyLink('${imageUrl}')">🔗 링크 복사</button>
+        `;
+      } catch (err) {
+        console.error('Image generation error:', err);
+        resultDiv.innerHTML = `<p>⚠️ 이미지 생성 실패: ${err.message}</p>`;
+      }
     }
 
-    const result = emotionDB[key];
-    const hearts = "❤️".repeat(result.score) + "🤍".repeat(5 - result.score);
-    const imageUrl = `https://via.placeholder.com/300x300?text=${my}+%E2%9D%A4+${partner}`;
+    function downloadImage(url) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mbti-image.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
 
-    resultDiv.innerHTML = `
-      <div class="hearts">${hearts}</div>
-      <p><strong>${result.message}</strong></p>
-      <p>${result.description}</p>
-      <div class="image-container">
-        <img id="generatedImage" src="${imageUrl}" alt="감성 이미지" />
-      </div>
-      <button onclick="downloadImage('${imageUrl}')">⬇️ 이미지 다운로드</button>
-      <button onclick="copyLink('${imageUrl}')">🔗 공유하기</button>
-    `;
-  }
+    function copyLink(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert('✅ 이미지 링크가 복사되었습니다!');
+      });
+    }
+  </script>
 
-  function downloadImage(url) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mbti-image.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
-  function copyLink(url) {
-    navigator.clipboard.writeText(url).then(() => {
-      alert("✅ 이미지 링크가 복사되었습니다!");
-    });
-  }
-</script>
-
-<!-- 여기에 emotionDB 전체 데이터 삽입 -->
-  <script>
+    <script>
   const emotionDB = {
   "INFP_INFP": {
     "score": 3,
@@ -1384,63 +1422,6 @@
   }
 };
 </script>
-  <!-- 여기가 HTML의 마지막 부분입니다 -->
-
-<!-- emotionDB 포함된 스크립트 아래 또는 그와 함께 삽입 -->
-<script>
-  async function runMatchTest() {
-    const my = document.getElementById("myMbti").value;
-    const partner = document.getElementById("partnerMbti").value;
-    const style = document.getElementById("style").value;
-    const key = `${my}_${partner}`;
-
-    const resultDiv = document.getElementById("result");
-    if (!emotionDB[key]) {
-      resultDiv.innerHTML = "<p>😢 아직 준비되지 않은 궁합 조합입니다.</p>";
-      return;
-    }
-
-    const result = emotionDB[key];
-    const hearts = "❤️".repeat(result.score) + "🤍".repeat(5 - result.score);
-
-    const prompt = `${my}와 ${partner}의 궁합을 ${style} 스타일로 감성적으로 표현한 일러스트`;
-
-    const response = await fetch("https://mbti-image-generator-fvfr.vercel.app/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
-    });
-
-    const data = await response.json();
-    const imageUrl = data?.url || "https://via.placeholder.com/300x300?text=이미지+생성+실패";
-
-    resultDiv.innerHTML = `
-      <div class="hearts">${hearts}</div>
-      <p><strong>${result.message}</strong></p>
-      <p>${result.description}</p>
-      <div class="image-container">
-        <img id="generatedImage" src="${imageUrl}" alt="감성 이미지" />
-      </div>
-      <button onclick="downloadImage('${imageUrl}')">⬇️ 이미지 다운로드</button>
-      <button onclick="copyLink('${imageUrl}')">🔗 공유하기</button>
-    `;
-  }
-
-  function downloadImage(url) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mbti-image.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
-  function copyLink(url) {
-    navigator.clipboard.writeText(url).then(() => {
-      alert("✅ 이미지 링크가 복사되었습니다!");
-    });
-  }
-</script>
-
+  
 </body>
 </html>
