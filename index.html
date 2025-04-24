@@ -1384,5 +1384,63 @@
   }
 };
 </script>
+  <!-- 여기가 HTML의 마지막 부분입니다 -->
+
+<!-- emotionDB 포함된 스크립트 아래 또는 그와 함께 삽입 -->
+<script>
+  async function runMatchTest() {
+    const my = document.getElementById("myMbti").value;
+    const partner = document.getElementById("partnerMbti").value;
+    const style = document.getElementById("style").value;
+    const key = `${my}_${partner}`;
+
+    const resultDiv = document.getElementById("result");
+    if (!emotionDB[key]) {
+      resultDiv.innerHTML = "<p>😢 아직 준비되지 않은 궁합 조합입니다.</p>";
+      return;
+    }
+
+    const result = emotionDB[key];
+    const hearts = "❤️".repeat(result.score) + "🤍".repeat(5 - result.score);
+
+    const prompt = `${my}와 ${partner}의 궁합을 ${style} 스타일로 감성적으로 표현한 일러스트`;
+
+    const response = await fetch("http://localhost:4000/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await response.json();
+    const imageUrl = data?.url || "https://via.placeholder.com/300x300?text=이미지+생성+실패";
+
+    resultDiv.innerHTML = `
+      <div class="hearts">${hearts}</div>
+      <p><strong>${result.message}</strong></p>
+      <p>${result.description}</p>
+      <div class="image-container">
+        <img id="generatedImage" src="${imageUrl}" alt="감성 이미지" />
+      </div>
+      <button onclick="downloadImage('${imageUrl}')">⬇️ 이미지 다운로드</button>
+      <button onclick="copyLink('${imageUrl}')">🔗 공유하기</button>
+    `;
+  }
+
+  function downloadImage(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mbti-image.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      alert("✅ 이미지 링크가 복사되었습니다!");
+    });
+  }
+</script>
+
 </body>
 </html>
